@@ -1,4 +1,6 @@
 python-telegram-bot
+untangle
+transmission-rpc
 pyyaml
 requests
 python-i18n

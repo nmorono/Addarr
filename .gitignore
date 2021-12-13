@@ -4,6 +4,8 @@ __pycache__/
 
 *.code-workspace
 *.log
+chatid.txt
+admin.txt
 config.yaml
 logs/
 env/
