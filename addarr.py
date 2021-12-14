@@ -176,7 +176,7 @@ def main():
 
     addJackett_handler = ConversationHandler(
         entry_points=[
-            CommandHandler('link',link),
+            CommandHandler(config["entrypointJackett"],link),
         ],
         states={
             KEYWORD: [MessageHandler(Filters.text, input_text)], 
@@ -214,7 +214,7 @@ def input_text(update, context):
     indexer=config["jackett"]["indexer"]
     apikey=config["jackett"]["auth"]["apikey"]
     category=config["jackett"]["category"]
-    url='http://'+ip+':'+port+'/api/v2.0/indexers/'+indexer+'/results/torznab/api'
+    url='http://'+ip+':'+str(port)+'/api/v2.0/indexers/'+indexer+'/results/torznab/api'
     query=update.message.text
     args= {'apikey':apikey,'t':'search','cat':category,'q':query}
     response= requests.get(url,args)
