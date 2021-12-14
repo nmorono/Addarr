@@ -228,7 +228,8 @@ def input_text(update, context):
     except:
         update.message.reply_text("0 results found")
         return ConversationHandler.END
-    print(len(movies))
+    #print(len(movies))
+    logger.debug(f"Encontradas {len(movies)} peliculas")
     context.user_data['movies']=movies
     
     keyboard =[]
@@ -664,6 +665,7 @@ def help(update, context):
             allMovies=config["entrypointAllMovies"],
             transmission=config["entrypointTransmission"],
             sabnzbd=config["entrypointSabnzbd"],
+            jackett=config["entrypointJackett"],
         )
     )
     return ConversationHandler.END
