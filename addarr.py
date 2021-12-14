@@ -2,12 +2,15 @@
 
 import logging
 import re
+import untangle
+import requests
+from transmission_rpc import Client
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 import telegram
 from telegram.ext import (CallbackQueryHandler, CommandHandler,
                           ConversationHandler, Filters, MessageHandler,
-                          Updater)
+                          Updater,CallbackContext)
 
 from commons import checkAdmin, checkId, authentication, format_bytes, format_long_list_message, getAuthChats
 import logger
@@ -24,6 +27,8 @@ logger = logger.getLogger("addarr", logLevel, config.get("logToConsole", False))
 logger.debug(f"Addarr v{__version__} starting up...")
 
 SERIE_MOVIE_AUTHENTICATED, READ_CHOICE, GIVE_OPTION, GIVE_PATHS, TSL_NORMAL = range(5)
+KEYWORD, BUTTON_SELECT, NOTFOUND = range(3)
+
 
 updater = Updater(config["telegram"]["token"], use_context=True)
 dispatcher = updater.dispatcher
@@ -169,6 +174,19 @@ def main():
         )
         dispatcher.add_handler(changeSabznbdSpeed_handler)
 
+    addJackett_handler = ConversationHandler(
+        entry_points=[
+            CommandHandler('link',link),
+        ],
+        states={
+            KEYWORD: [MessageHandler(Filters.text, input_text)], 
+            BUTTON_SELECT: [CallbackQueryHandler(pattern='selected',callback=download_movie)], 
+            },
+        fallbacks=[CommandHandler('cancel', cancel)],
+    )
+    
+
+
     dispatcher.add_handler(auth_handler_command)
     dispatcher.add_handler(auth_handler_text)
     dispatcher.add_handler(allSeries_handler_command)
@@ -176,6 +194,8 @@ def main():
     dispatcher.add_handler(allMovies_handler_command)
     dispatcher.add_handler(allMovies_handler_text)
     dispatcher.add_handler(addMovieserie_handler)
+    dispatcher.add_handler(addJackett_handler)
+
 
     help_handler_command = CommandHandler(config["entrypointHelp"], help)
     dispatcher.add_handler(help_handler_command)
@@ -184,6 +204,63 @@ def main():
     updater.start_polling()
     updater.idle()
 
+def link(update: Update, context: CallbackContext):
+    context.bot.send_message(chat_id=update.effective_chat.id, text="I'm gonna to search movies for you\n please give me a keyword!")
+    return KEYWORD
+
+def input_text(update, context): 
+    ip=config["jackett"]["server"]["addr"]
+    port=config["jackett"]["server"]["port"]
+    indexer=config["jackett"]["indexer"]
+    apikey=config["jackett"]["auth"]["apikey"]
+    category=config["jackett"]["category"]
+    url='http://'+ip+':'+port+'/api/v2.0/indexers/'+indexer+'/results/torznab/api'
+    query=update.message.text
+    args= {'apikey':apikey,'t':'search','cat':category,'q':query}
+    response= requests.get(url,args)
+    obj=untangle.parse(response.text)
+    movies=[]
+    try:
+        for children in obj.rss.channel.item:
+            title=children.title.cdata
+            link=children.link.cdata        
+            movies.append({'title':title,'link':link})
+    except:
+        update.message.reply_text("0 results found")
+        return ConversationHandler.END
+    print(len(movies))
+    context.user_data['movies']=movies
+    
+    keyboard =[]
+    for i in range(len(movies)):
+        keyboard = keyboard + [[InlineKeyboardButton(text=movies[i]['title'], callback_data='selected_'+str(i))]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    update.message.reply_text(
+        text='Alguna de estas?',
+        reply_markup=reply_markup
+        )
+    return BUTTON_SELECT
+
+def download_movie(update: Update, context: CallbackContext) -> None:
+    host=config["transmission"]["host"]
+    username=config["transmission"]["username"]
+    password=config["transmission"]["password"]
+    download_dir=config["transmission"]["alt_download"]
+    c = Client(host=host, port=9091, username=username, password=password)
+    query = update.callback_query
+    query.answer()
+    movies=context.user_data.get('movies',None)
+    movie_link=movies[int(query.data.split("_")[1])]['link']
+    query.edit_message_text(text=f"Selected option: {movie_link}")
+    c.add_torrent(movie_link,download_dir=download_dir)
+    return ConversationHandler.END
+
+def cancel(update: Update, context: CallbackContext) -> int:
+    """Cancels and ends the conversation."""
+    update.message.reply_text(
+        'Bye! I hope we can talk again some day.')
+    return ConversationHandler.END
 def stop(update, context):
     clearUserData(context)
     context.bot.send_message(
