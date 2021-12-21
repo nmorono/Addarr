@@ -2,8 +2,8 @@ FROM python:alpine
 
 WORKDIR /app
 
-ARG PUID=1000
-ARG PGID=1000
+ARG PUID=1234
+ARG PGID=1234
 
 # Install requirements
 RUN apk add --no-cache \
