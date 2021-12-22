@@ -255,13 +255,17 @@ def download_movie(update: Update, context: CallbackContext) -> None:
     movie_link=movies[int(query.data.split("_")[1])]['link']
     query.edit_message_text(text=f"Selected option: {movie_link}")
     c.add_torrent(movie_link,download_dir=download_dir)
+    clearUserData(context)
     return ConversationHandler.END
 
 def cancel(update: Update, context: CallbackContext) -> int:
     """Cancels and ends the conversation."""
-    update.message.reply_text(
-        'Bye! I hope we can talk again some day.')
+    query = update.callback_query
+    query.answer()
+    query.edit_message_text('Bye! I hope we can talk again some day.')
+    clearUserData(context)
     return ConversationHandler.END
+
 def stop(update, context):
     clearUserData(context)
     context.bot.send_message(
