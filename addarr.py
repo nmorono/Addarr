@@ -228,7 +228,9 @@ def input_text(update, context):
             files=children.files.cdata
         except:
             files=1
-        link=children.link.cdata        
+        link=children.link.cdata    
+        if not re.match("magnet",link):
+            files=0    
         for seeder in children.torznab_attr:
             if seeder['name']=='seeders' and int(size)>500000000 and int(files)==1:
                 seeders=seeder['value']
