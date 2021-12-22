@@ -221,10 +221,19 @@ def input_text(update, context):
     obj=untangle.parse(response.text)
     movies=[]
     try:
-        for children in obj.rss.channel.item:
-            title=children.title.cdata
-            link=children.link.cdata        
-            movies.append({'title':title,'link':link})
+      for children in obj.rss.channel.item:
+        title=children.title.cdata
+        size=children.size.cdata
+        try:
+            files=children.files.cdata
+        except:
+            files=1
+        link=children.link.cdata        
+        for seeder in children.torznab_attr:
+            if seeder['name']=='seeders' and int(size)>500000000 and int(files)==1:
+                seeders=seeder['value']
+                if int(seeders)>1:
+                    movies.append({'title':title,'link':link})
     except:
         update.message.reply_text("0 results found")
         return ConversationHandler.END
