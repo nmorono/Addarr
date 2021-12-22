@@ -258,10 +258,11 @@ def download_movie(update: Update, context: CallbackContext) -> None:
     clearUserData(context)
     return ConversationHandler.END
 
-def cancel(update: Update, context: CallbackContext) -> int:
+def cancel(update: Update, context: CallbackContext) -> None:
     """Cancels and ends the conversation."""
-    query = update.callback_query
-    query.edit_message_text('Bye! I hope we can talk again some day.')
+    update.message.reply_text(
+        text='Bye! I hope we can talk again some day.'
+        )
     clearUserData(context)
     return ConversationHandler.END
 
