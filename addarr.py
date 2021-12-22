@@ -236,7 +236,7 @@ def input_text(update, context):
                 seeders=seeder['value']
                 if int(seeders)>1:
                     movies.append({'title':title,'link':link})
-                    logger.info(files,seeders,size,title,link)
+                    logger.info("{} {} {} {} {}".format(files,seeders,size,title,link))
     except:
         update.message.reply_text("0 results found")
         return ConversationHandler.END
