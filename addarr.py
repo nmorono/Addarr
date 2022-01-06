@@ -232,7 +232,7 @@ def input_text(update, context):
             link=children.link.cdata 
             if int(peers) > 0 and int(size)>700:   
                 movies.append({'title':title,'link':link,'size':size,'peers':peers})
-                logger.info("{} {} {} {} {}".format(peers,size,title,link))
+                logger.debug("{} {} {} {}".format(peers,size,title,link))
     except:
         update.message.reply_text("0 results found")
         return ConversationHandler.END
