@@ -220,27 +220,22 @@ def input_text(update, context):
     response= requests.get(url,args)
     obj=untangle.parse(response.text)
     movies=[]
+    
     try:
-      for children in obj.rss.channel.item:
-        title=children.title.cdata
-        size=children.size.cdata
-        try:
-            files=children.files.cdata
-        except:
-            files=1
-        link=children.link.cdata    
-        if not re.match("magnet",link):
-            files=0    
-        for seeder in children.torznab_attr:
-            if seeder['name']=='seeders' and int(size)>500000000 and int(files)==1:
-                seeders=seeder['value']
-                if int(seeders)>1:
-                    movies.append({'title':title,'link':link})
-                    logger.info("{} {} {} {} {}".format(files,seeders,size,title,link))
+        for children in obj.rss.channel.item:
+            title=children.title.cdata
+            size=int(children.size.cdata)/(1024*1024)
+            torznabobj=children.torznab_attr
+            for object in torznabobj:
+                if(object['name']=='peers'):
+                    peers=object['value']  
+            link=children.link.cdata 
+            if int(peers) > 0 and int(size)>700:   
+                movies.append({'title':title,'link':link,'size':size,'peers':peers})
+                logger.info("{} {} {} {} {}".format(peers,size,title,link))
     except:
         update.message.reply_text("0 results found")
         return ConversationHandler.END
-    #print(len(movies))
     logger.debug(f"Encontradas {len(movies)} peliculas")
     context.user_data['movies']=movies
     
