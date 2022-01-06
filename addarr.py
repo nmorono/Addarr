@@ -217,6 +217,7 @@ def input_text(update, context):
     url='http://'+ip+':'+str(port)+'/api/v2.0/indexers/'+indexer+'/results/torznab/api'
     query=update.message.text
     args= {'apikey':apikey,'t':'search','cat':category,'q':query}
+    logger.debug("{}".format(url))
     response= requests.get(url,args)
     obj=untangle.parse(response.text)
     movies=[]
@@ -232,7 +233,7 @@ def input_text(update, context):
             link=children.link.cdata 
             if int(peers) > 0 and int(size)>700:   
                 movies.append({'title':title,'link':link,'size':size,'peers':peers})
-                logger.debug("{} {} {} {}".format(peers,size,title,link))
+                #logger.debug("{} {} {} {}".format(peers,size,title,link))
     except:
         update.message.reply_text("0 results found")
         return ConversationHandler.END
@@ -259,9 +260,13 @@ def download_movie(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
     movies=context.user_data.get('movies',None)
+    logger.debug("{}".format(query.data))
     movie_link=movies[int(query.data.split("_")[1])]['link']
     query.edit_message_text(text=f"Selected option: {movie_link}")
-    c.add_torrent(movie_link,download_dir=download_dir)
+    try:
+        c.add_torrent(movie_link,download_dir=download_dir)
+    except:
+        logger.info("No pudo descargar de {}".format(movie_link))
     clearUserData(context)
     return ConversationHandler.END
 
