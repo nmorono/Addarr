@@ -264,9 +264,12 @@ def download_movie(update: Update, context: CallbackContext) -> None:
     movie_link=movies[int(query.data.split("_")[1])]['link']
     query.edit_message_text(text=f"Selected option: {movie_link}")
     try:
-        c.add_torrent(movie_link,download_dir=download_dir)
+        response = requests.get(movie_link,allow_redirects=False)
+        if response.status_code == 302:
+            movie_link=response.headers['Location']
     except:
-        logger.info("No pudo descargar de {}".format(movie_link))
+        logger.info("Vino en formato magnet de una {}".format(movie_link))
+    c.add_torrent(movie_link,download_dir=download_dir)
     clearUserData(context)
     return ConversationHandler.END
 
